@@ -1,0 +1,61 @@
+{
+    "name": "playwright-php/playwright-behat",
+    "description": "",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Simon André",
+            "email": "smn.andre@gmail.com",
+            "homepage": "https://github.com/smnandre"
+        },
+        {
+            "name": "PlaywrightPHP Contributors",
+            "homepage": "https://github.com/playwright-php/playwright"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+         "behat/behat": "^3.23",
+        "playwright-php/playwright": "dev-main"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.40",
+        "phpunit/phpunit": "^12.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../smnandre/playwrightphp",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "PlaywrightPHP\\Behat\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PlaywrightPHP\\Behat\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.x-dev"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "cs-check": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "vendor/bin/php-cs-fixer fix --diff",
+        "test": "vendor/bin/phpunit"
+    }
+}

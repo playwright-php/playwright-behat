@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php: ['8.3', '8.4']
+        behat: ['^3.14']
+
+    name: PHP ${{ matrix.php }} - Behat ${{ matrix.behat }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+
+      - name: Install Playwright
+        run: npx -y playwright install chromium
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: |
+          composer require behat/behat:${{ matrix.behat }} --no-update
+          composer install --prefer-dist --no-progress
+
+#      - name: Run static analysis
+#        run: vendor/bin/phpstan analyse src tests --level=8
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+
+      - name: Run integration tests
+        run: vendor/bin/behat --strict --no-interaction
+        env:
+          BEHAT_PARAMS: '{"extensions":{"PlaywrightPHP\\Behat\\ServiceContainer\\PlaywrightExtension":{"headless":true}}}'
+
+#      - name: Upload test screenshots
+#        uses: actions/upload-artifact@v4
+#        if: failure()
+#        with:
+#          name: screenshots-php${{ matrix.php }}-behat${{ matrix.behat }}
+#          path: var/screenshots/
