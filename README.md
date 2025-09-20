@@ -120,4 +120,5 @@ And many more! Check the `PlaywrightContext` class for all available steps.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This package is released by the [Playwright PHP](https://playwright-php.dev) 
+project under the MIT License. See the [LICENSE](LICENSE) file for details.
