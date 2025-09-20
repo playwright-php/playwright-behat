@@ -3,12 +3,16 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the playwright-php/playwright package.
- * For the full copyright and license information, please view
- * the LICENSE file that was distributed with this source code.
+ * This file is part of the community-maintained Playwright PHP project.
+ * It is not affiliated with or endorsed by Microsoft.
+ *
+ * (c) 2025-Present - Playwright PHP - https://github.com/playwright-php
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
-namespace PlaywrightPHP\Behat\ServiceContainer;
+namespace Playwright\Behat\ServiceContainer;
 
 use Behat\Testwork\ServiceContainer\Extension as ExtensionInterface;
 use Behat\Testwork\ServiceContainer\ExtensionManager;
@@ -19,7 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class PlaywrightExtension implements ExtensionInterface
 {
-    public const PLAYWRIGHT_ID = 'playwright';
+    public const string PLAYWRIGHT_ID = 'playwright';
 
     public function getConfigKey(): string
     {

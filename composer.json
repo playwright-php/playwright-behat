@@ -34,12 +34,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "PlaywrightPHP\\Behat\\": "src/"
+            "Playwright\\Behat\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "PlaywrightPHP\\Behat\\Tests\\": "tests/"
+            "Playwright\\Behat\\Tests\\": "tests/"
         }
     },
     "extra": {

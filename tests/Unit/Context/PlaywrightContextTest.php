@@ -3,17 +3,21 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the playwright-php/playwright package.
- * For the full copyright and license information, please view
- * the LICENSE file that was distributed with this source code.
+ * This file is part of the community-maintained Playwright PHP project.
+ * It is not affiliated with or endorsed by Microsoft.
+ *
+ * (c) 2025-Present - Playwright PHP - https://github.com/playwright-php
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
-namespace PlaywrightPHP\Behat\Tests\Unit\Context;
+namespace Playwright\Behat\Tests\Unit\Context;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use PlaywrightPHP\Behat\Context\PlaywrightContext;
-use PlaywrightPHP\Behat\Exception\BrowserNotStartedException;
+use Playwright\Behat\Context\PlaywrightContext;
+use Playwright\Behat\Exception\BrowserNotStartedException;
 
 #[CoversClass(PlaywrightContext::class)]
 final class PlaywrightContextTest extends TestCase

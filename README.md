@@ -26,7 +26,7 @@ Add the extension to your `behat.yml`:
 ```yaml
 default:
   extensions:
-    PlaywrightPHP\Behat\ServiceContainer\PlaywrightExtension:
+    Playwright\Behat\ServiceContainer\PlaywrightExtension:
       headless: false
       browser: chromium
       screenshot_dir: 'var/screenshots'
@@ -40,7 +40,7 @@ default:
     web:
       paths: ['features']
       contexts:
-        - PlaywrightPHP\Behat\Context\PlaywrightContext
+        - Playwright\Behat\Context\PlaywrightContext
 ```
 
 ## Usage
@@ -62,7 +62,7 @@ Feature: User Authentication
 Extend `RawPlaywrightContext` for custom logic:
 
 ```php
-use PlaywrightPHP\Behat\Context\RawPlaywrightContext;
+use Playwright\Behat\Context\RawPlaywrightContext;
 use Behat\Step\When;
 
 class MyCustomContext extends RawPlaywrightContext
