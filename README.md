@@ -1,5 +1,4 @@
 <div align="center">
-<img src="https://github.com/playwright-php/.github/raw/main/profile/playwright-php.png" alt="Playwright PHP" />
 
 &nbsp; ![PHP Version](https://img.shields.io/badge/PHP-8.3+-05971B?labelColor=09161E&color=1D8D23&logoColor=FFFFFF)
 &nbsp; ![CI](https://img.shields.io/github/actions/workflow/status/playwright-php/playwright-behat/CI.yaml?branch=main&label=Tests&color=1D8D23&labelColor=09161E&logoColor=FFFFFF)
@@ -10,6 +9,8 @@
 
 # PlaywrightPHP - Behat Extension
 
+> [!WARNING]
+> This package is in active development phase.
 
 A Behat extension that integrates [PlaywrightPHP](https://playwright-php.dev) for modern browser automation testing.
 
