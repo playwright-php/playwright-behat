@@ -1,0 +1,14 @@
+default:
+  extensions:
+    Playwright\Behat\ServiceContainer\PlaywrightExtension:
+      base_url: 'http://127.0.0.1:8971'
+      screenshot_dir: '%paths.base%/var/screenshots'
+  suites:
+    passing:
+      paths: ['%paths.base%/features/passing']
+      contexts:
+        - Playwright\Behat\Context\PlaywrightContext
+    failing:
+      paths: ['%paths.base%/features/failing']
+      contexts:
+        - Playwright\Behat\Context\PlaywrightContext

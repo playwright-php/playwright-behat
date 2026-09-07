@@ -4,3 +4,4 @@
 /composer.lock
 /phpstan.neon
 /phpunit.xml
+/tests/Fixtures/var/
