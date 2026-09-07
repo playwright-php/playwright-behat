@@ -94,6 +94,27 @@ final class PlaywrightContextTest extends TestCase
         $this->context->iShouldSee('Not there');
     }
 
+    public function testClickOnAMissingElementFailsWithinTheConfiguredTimeout(): void
+    {
+        $manager = new PlaywrightManager(['timeout' => 500, 'base_url' => self::fixtureBaseUrl()]);
+        $context = new PlaywrightContext();
+        $context->setPlaywrightManager($manager);
+
+        try {
+            $context->iAmOn('/index.html');
+            $start = microtime(true);
+
+            try {
+                $context->iClickOn('#does-not-exist');
+                $this->fail('Clicking a missing element must throw.');
+            } catch (\Throwable $e) {
+                $this->assertLessThan(5.0, microtime(true) - $start, 'The configured timeout was not applied: '.$e->getMessage());
+            }
+        } finally {
+            $manager->shutdown();
+        }
+    }
+
     public function testNamedScreenshotIsSavedInTheConfiguredDirectory(): void
     {
         $this->context->iAmOn('/index.html');

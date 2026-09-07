@@ -37,13 +37,19 @@ final class PlaywrightContext extends RawPlaywrightContext
     #[When('I click on :selector')]
     public function iClickOn(string $selector): void
     {
-        $this->getPage()->locator($selector)->click();
+        // waitFor() runs in the browser and honours the configured timeout;
+        // the library's own actionability wait in click() does not.
+        $locator = $this->getPage()->locator($selector);
+        $locator->waitFor();
+        $locator->click();
     }
 
     #[When('I fill :selector with :value')]
     public function iFillWith(string $selector, string $value): void
     {
-        $this->getPage()->locator($selector)->fill($value);
+        $locator = $this->getPage()->locator($selector);
+        $locator->waitFor();
+        $locator->fill($value);
     }
 
     #[Then('I should see :text')]

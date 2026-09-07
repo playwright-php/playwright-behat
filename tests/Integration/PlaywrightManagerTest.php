@@ -108,6 +108,26 @@ final class PlaywrightManagerTest extends TestCase
         $this->assertFileExists($path);
     }
 
+    public function testConfiguredTimeoutAppliesToPageActions(): void
+    {
+        $manager = new PlaywrightManager(['timeout' => 500, 'base_url' => self::fixtureBaseUrl()]);
+
+        try {
+            $page = $manager->getPage();
+            $page->goto('/index.html');
+            $start = microtime(true);
+
+            try {
+                $page->waitForSelector('#does-not-exist');
+                $this->fail('Waiting for a missing element must throw.');
+            } catch (\Throwable $e) {
+                $this->assertLessThan(5.0, microtime(true) - $start, 'The configured timeout was not applied: '.$e->getMessage());
+            }
+        } finally {
+            $manager->shutdown();
+        }
+    }
+
     public function testShutdownClosesEverythingAndAllowsARestart(): void
     {
         self::$manager->getPage();

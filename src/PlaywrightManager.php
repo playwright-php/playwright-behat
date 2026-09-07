@@ -52,6 +52,14 @@ final class PlaywrightManager
         return $this->config;
     }
 
+    /**
+     * Timeout in milliseconds for browser actions and navigations.
+     */
+    public function getTimeout(): int
+    {
+        return (int) ($this->config['timeout'] ?? 30000);
+    }
+
     public function getBrowser(): BrowserInterface
     {
         if (null !== $this->browser) {
@@ -94,6 +102,7 @@ final class PlaywrightManager
         }
 
         $this->context = $this->getBrowser()->newContext($options);
+        $this->context->setDefaultTimeout($this->getTimeout());
 
         return $this->page = $this->context->newPage();
     }
@@ -153,10 +162,13 @@ final class PlaywrightManager
 
     private function createPlaywrightConfig(): PlaywrightConfig
     {
+        // timeoutMs bounds the round trip to the Node bridge, not a browser
+        // action: keep it above the action timeout so the browser reports the
+        // failure (with its call log) before the transport gives up.
         return new PlaywrightConfig(
             browser: BrowserType::from(is_string($this->config['browser'] ?? null) ? $this->config['browser'] : 'chromium'),
             headless: (bool) ($this->config['headless'] ?? true),
-            timeoutMs: (int) ($this->config['timeout'] ?? 30000),
+            timeoutMs: max(30000, $this->getTimeout() + 5000),
             slowMoMs: (int) ($this->config['slow_mo'] ?? 0),
             screenshotDir: $this->getScreenshotDir(),
         );
