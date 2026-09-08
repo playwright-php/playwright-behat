@@ -63,7 +63,7 @@ final class BehatRunTest extends TestCase
         $process = new Process([
             PHP_BINARY,
             __DIR__.'/../../vendor/bin/behat',
-            '--config', __DIR__.'/../Fixtures/behat.yml',
+            '--config', __DIR__.'/../Fixtures/behat.php',
             '--suite', $suite,
             '--format', 'progress',
             '--no-colors',
