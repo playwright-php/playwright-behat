@@ -14,122 +14,39 @@ declare(strict_types=1);
 
 namespace Playwright\Behat\Context;
 
-use Behat\Behat\Context\Context;
+use Playwright\Behat\Exception\PlaywrightException;
+use Playwright\Behat\PlaywrightManager;
 use Playwright\Browser\BrowserInterface;
-use Playwright\Browser\BrowserType;
-use Playwright\Configuration\PlaywrightConfig;
 use Playwright\Page\PageInterface;
-use Playwright\PlaywrightClient;
-use Playwright\PlaywrightFactory;
 
 /**
- * @author Simon André <smn.andre@gmail.com>
+ * Base class for project contexts that drive the browser without inheriting
+ * the built-in steps. Extend it and use getPage() in your own step methods.
  */
-abstract class RawPlaywrightContext implements Context
+abstract class RawPlaywrightContext implements PlaywrightAwareContext
 {
-    protected PlaywrightClient $playwright;
-    protected BrowserInterface $browser;
-    protected PageInterface $page;
-    protected PlaywrightConfig $playwrightConfig;
-    protected array $config = [];
-    protected array $screenshots = [];
+    private ?PlaywrightManager $playwright = null;
 
-    public function __construct(array $config = [])
+    public function setPlaywrightManager(PlaywrightManager $manager): void
     {
-        if (!empty($config)) {
-            $this->setPlaywrightConfig($config);
-        }
+        $this->playwright = $manager;
     }
 
-    public function setPlaywrightConfig(array $config): void
+    public function getPlaywrightManager(): PlaywrightManager
     {
-        $this->config = $config;
-
-        $browserType = match ($config['browser'] ?? 'chromium') {
-            'firefox' => BrowserType::FIREFOX,
-            'webkit' => BrowserType::WEBKIT,
-            default => BrowserType::CHROMIUM,
-        };
-
-        $this->playwrightConfig = new PlaywrightConfig(
-            browser: $browserType,
-            headless: $config['headless'] ?? true,
-            screenshotDir: $config['screenshot_dir'] ?? sys_get_temp_dir().'/behat-screenshots',
-            timeoutMs: $config['timeout'] ?? 30000,
-            slowMoMs: isset($config['slow_mo']['delay']) ? (int) $config['slow_mo']['delay'] : 0
-        );
+        return $this->playwright ?? throw new PlaywrightException(sprintf('%s did not receive a PlaywrightManager. Enable %s in your Behat configuration.', static::class, 'Playwright\Behat\ServiceContainer\PlaywrightExtension'));
     }
 
-    protected function startBrowser(): void
+    /**
+     * The page of the current scenario, opened on first call.
+     */
+    public function getPage(): PageInterface
     {
-        if (!isset($this->playwright)) {
-            $this->playwright = PlaywrightFactory::create($this->playwrightConfig);
-
-            $browserBuilder = match ($this->playwrightConfig->browser) {
-                BrowserType::FIREFOX => $this->playwright->firefox(),
-                BrowserType::WEBKIT => $this->playwright->webkit(),
-                default => $this->playwright->chromium(),
-            };
-
-            $browserBuilder->withHeadless($this->playwrightConfig->headless);
-
-            if ($this->playwrightConfig->slowMoMs > 0) {
-                $browserBuilder->withSlowMo($this->playwrightConfig->slowMoMs);
-            }
-
-            if (!empty($this->playwrightConfig->args)) {
-                $browserBuilder->withArgs($this->playwrightConfig->args);
-            }
-
-            $this->browser = $browserBuilder->launch();
-            $this->page = $this->browser->newPage();
-
-            if (isset($this->config['viewport'])) {
-                $this->page->setViewportSize(
-                    $this->config['viewport']['width'],
-                    $this->config['viewport']['height']
-                );
-            }
-        }
+        return $this->getPlaywrightManager()->getPage();
     }
 
-    protected function stopBrowser(): void
+    public function getBrowser(): BrowserInterface
     {
-        $this->page?->close();
-        $this->browser?->close();
-        $this->playwright?->close();
-        unset($this->playwright, $this->browser, $this->page);
-    }
-
-    protected function takeScreenshot(string $name = ''): string
-    {
-        if (!$name) {
-            $name = 'screenshot-'.date('Y-m-d-H-i-s');
-        }
-
-        $path = $this->page->screenshotAuto($name);
-        $this->screenshots[] = $path;
-
-        return $path;
-    }
-
-    public function getPage(): ?PageInterface
-    {
-        return $this->page ?? null;
-    }
-
-    public function getBrowser(): ?BrowserInterface
-    {
-        return $this->browser ?? null;
-    }
-
-    public function getPlaywright(): ?PlaywrightClient
-    {
-        return $this->playwright ?? null;
-    }
-
-    public function getScreenshots(): array
-    {
-        return $this->screenshots;
+        return $this->getPlaywrightManager()->getBrowser();
     }
 }

@@ -18,6 +18,9 @@ jobs:
   cs:
     uses: playwright-php/.github/.github/workflows/CS.yml@main
 
+  sa:
+    uses: playwright-php/.github/.github/workflows/SA.yml@main
+
   tests:
     name: Tests (PHP ${{ matrix.php }}, Behat ${{ matrix.behat }})
     runs-on: ubuntu-latest
@@ -52,5 +55,23 @@ jobs:
           composer require "behat/behat:${{ matrix.behat }}" --no-update --no-interaction
           composer update --no-interaction --prefer-dist --no-progress
 
-      - name: PHPUnit
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ms-playwright-${{ runner.os }}-
+
+      - name: Install Playwright (browsers + system deps)
+        run: vendor/bin/playwright-install --with-deps
+
+      - name: PHPUnit (unit, integration and a real Behat run)
         run: vendor/bin/phpunit
+
+      - name: Upload screenshots of failed scenarios
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-php${{ matrix.php }}
+          path: tests/Fixtures/var/screenshots/
+          if-no-files-found: ignore

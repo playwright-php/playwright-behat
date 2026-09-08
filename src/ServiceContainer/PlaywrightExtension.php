@@ -14,25 +14,27 @@ declare(strict_types=1);
 
 namespace Playwright\Behat\ServiceContainer;
 
+use Behat\Behat\Context\ServiceContainer\ContextExtension;
+use Behat\Testwork\EventDispatcher\ServiceContainer\EventDispatcherExtension;
 use Behat\Testwork\ServiceContainer\Extension as ExtensionInterface;
 use Behat\Testwork\ServiceContainer\ExtensionManager;
+use Playwright\Behat\Context\Initializer\PlaywrightAwareInitializer;
+use Playwright\Behat\EventListener\ScenarioListener;
+use Playwright\Behat\PlaywrightManager;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
-use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 
 final class PlaywrightExtension implements ExtensionInterface
 {
-    public const PLAYWRIGHT_ID = 'playwright';
-
     public function getConfigKey(): string
     {
-        return self::PLAYWRIGHT_ID;
+        return 'playwright';
     }
 
     public function initialize(ExtensionManager $extensionManager): void
     {
-        // Extension initialization if needed
     }
 
     public function configure(ArrayNodeDefinition $builder): void
@@ -42,56 +44,40 @@ final class PlaywrightExtension implements ExtensionInterface
             ->children()
                 ->booleanNode('headless')
                     ->defaultTrue()
-                    ->info('Run browser in headless mode')
+                    ->info('Run the browser without a visible window')
                 ->end()
                 ->enumNode('browser')
                     ->values(['chromium', 'firefox', 'webkit'])
                     ->defaultValue('chromium')
-                    ->info('Browser type to use')
-                ->end()
-                ->scalarNode('screenshot_dir')
-                    ->defaultValue('%paths.base%/var/screenshots')
-                    ->info('Directory to store screenshots')
-                ->end()
-                ->integerNode('timeout')
-                    ->defaultValue(30000)
-                    ->min(1000)
-                    ->info('Default timeout in milliseconds')
+                    ->info('Browser engine to launch')
                 ->end()
                 ->scalarNode('base_url')
                     ->defaultNull()
-                    ->info('Base URL for relative navigation')
+                    ->info('Prefix for relative URLs passed to goto()')
+                ->end()
+                ->scalarNode('screenshot_dir')
+                    ->defaultValue('%paths.base%/var/screenshots')
+                    ->info('Directory for named and failure screenshots')
+                ->end()
+                ->booleanNode('auto_screenshot_on_failure')
+                    ->defaultTrue()
+                    ->info('Save a screenshot when a scenario fails')
+                ->end()
+                ->integerNode('timeout')
+                    ->defaultValue(30000)
+                    ->min(0)
+                    ->info('Default action and navigation timeout in milliseconds')
+                ->end()
+                ->integerNode('slow_mo')
+                    ->defaultValue(0)
+                    ->min(0)
+                    ->info('Delay between browser operations in milliseconds')
                 ->end()
                 ->arrayNode('viewport')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->integerNode('width')
-                            ->defaultValue(1280)
-                            ->min(100)
-                        ->end()
-                        ->integerNode('height')
-                            ->defaultValue(720)
-                            ->min(100)
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('browser_options')
-                    ->useAttributeAsKey('name')
-                    ->prototype('variable')->end()
-                    ->info('Additional browser launch options')
-                ->end()
-                ->booleanNode('auto_screenshot_on_failure')
-                    ->defaultTrue()
-                    ->info('Automatically take screenshot on scenario failure')
-                ->end()
-                ->arrayNode('slow_mo')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->integerNode('delay')
-                            ->defaultValue(0)
-                            ->min(0)
-                            ->info('Delay between actions in milliseconds')
-                        ->end()
+                        ->integerNode('width')->defaultValue(1280)->min(1)->end()
+                        ->integerNode('height')->defaultValue(720)->min(1)->end()
                     ->end()
                 ->end()
             ->end();
@@ -99,94 +85,18 @@ final class PlaywrightExtension implements ExtensionInterface
 
     public function load(ContainerBuilder $container, array $config): void
     {
-        $this->loadParameters($container, $config);
+        $container->setDefinition(PlaywrightManager::class, new Definition(PlaywrightManager::class, [$config]));
+
+        $initializer = new Definition(PlaywrightAwareInitializer::class, [new Reference(PlaywrightManager::class)]);
+        $initializer->addTag(ContextExtension::INITIALIZER_TAG);
+        $container->setDefinition(PlaywrightAwareInitializer::class, $initializer);
+
+        $listener = new Definition(ScenarioListener::class, [new Reference(PlaywrightManager::class)]);
+        $listener->addTag(EventDispatcherExtension::SUBSCRIBER_TAG);
+        $container->setDefinition(ScenarioListener::class, $listener);
     }
 
     public function process(ContainerBuilder $container): void
     {
-        // Post-processing if needed
-    }
-
-    public function getConfigurationDefinition(): ConfigurationInterface
-    {
-        return new class implements ConfigurationInterface {
-            public function getConfigTreeBuilder(): TreeBuilder
-            {
-                $treeBuilder = new TreeBuilder('playwright');
-                $rootNode = $treeBuilder->getRootNode();
-
-                $rootNode
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('headless')
-                            ->defaultTrue()
-                            ->info('Run browser in headless mode')
-                        ->end()
-                        ->enumNode('browser')
-                            ->values(['chromium', 'firefox', 'webkit'])
-                            ->defaultValue('chromium')
-                            ->info('Browser type to use')
-                        ->end()
-                        ->scalarNode('screenshot_dir')
-                            ->defaultValue('%paths.base%/var/screenshots')
-                            ->info('Directory to store screenshots')
-                        ->end()
-                        ->integerNode('timeout')
-                            ->defaultValue(30000)
-                            ->min(1000)
-                            ->info('Default timeout in milliseconds')
-                        ->end()
-                        ->scalarNode('base_url')
-                            ->defaultNull()
-                            ->info('Base URL for relative navigation')
-                        ->end()
-                        ->arrayNode('viewport')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->integerNode('width')
-                                    ->defaultValue(1280)
-                                    ->min(100)
-                                ->end()
-                                ->integerNode('height')
-                                    ->defaultValue(720)
-                                    ->min(100)
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('browser_options')
-                            ->useAttributeAsKey('name')
-                            ->prototype('variable')->end()
-                            ->info('Additional browser launch options')
-                        ->end()
-                        ->booleanNode('auto_screenshot_on_failure')
-                            ->defaultTrue()
-                            ->info('Automatically take screenshot on scenario failure')
-                        ->end()
-                        ->arrayNode('slow_mo')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->integerNode('delay')
-                                    ->defaultValue(0)
-                                    ->min(0)
-                                    ->info('Delay between actions in milliseconds')
-                                ->end()
-                            ->end()
-                        ->end()
-                    ->end();
-
-                return $treeBuilder;
-            }
-        };
-    }
-
-    private function loadParameters(ContainerBuilder $container, array $config): void
-    {
-        $container->setParameter('playwright.config', $config);
-        $container->setParameter('playwright.headless', $config['headless']);
-        $container->setParameter('playwright.browser', $config['browser']);
-        $container->setParameter('playwright.screenshot_dir', $config['screenshot_dir']);
-        $container->setParameter('playwright.timeout', $config['timeout']);
-        $container->setParameter('playwright.base_url', $config['base_url']);
-        $container->setParameter('playwright.viewport', $config['viewport']);
     }
 }

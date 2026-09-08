@@ -14,9 +14,15 @@ declare(strict_types=1);
 
 namespace Playwright\Behat\Tests\Unit\ServiceContainer;
 
+use Behat\Behat\Context\ServiceContainer\ContextExtension;
+use Behat\Testwork\EventDispatcher\ServiceContainer\EventDispatcherExtension;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Playwright\Behat\Context\Initializer\PlaywrightAwareInitializer;
+use Playwright\Behat\EventListener\ScenarioListener;
+use Playwright\Behat\PlaywrightManager;
 use Playwright\Behat\ServiceContainer\PlaywrightExtension;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -30,43 +36,70 @@ final class PlaywrightExtensionTest extends TestCase
         $this->extension = new PlaywrightExtension();
     }
 
-    public function testGetConfigKey(): void
+    public function testConfigKey(): void
     {
-        $this->assertEquals('playwright', $this->extension->getConfigKey());
+        $this->assertSame('playwright', $this->extension->getConfigKey());
     }
 
-    public function testDefaultConfiguration(): void
+    public function testConfigureProvidesDefaults(): void
     {
-        $processor = new Processor();
-        $config = $processor->processConfiguration(
-            $this->extension->getConfigurationDefinition(),
-            []
-        );
+        $config = $this->processConfig([]);
 
         $this->assertTrue($config['headless']);
-        $this->assertEquals('chromium', $config['browser']);
-        $this->assertEquals(30000, $config['timeout']);
+        $this->assertSame('chromium', $config['browser']);
+        $this->assertSame(30000, $config['timeout']);
+        $this->assertNull($config['base_url']);
+        $this->assertSame(['width' => 1280, 'height' => 720], $config['viewport']);
         $this->assertTrue($config['auto_screenshot_on_failure']);
+        $this->assertSame(0, $config['slow_mo']);
     }
 
-    public function testLoad(): void
+    public function testConfigureRejectsUnknownBrowser(): void
+    {
+        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+
+        $this->processConfig(['browser' => 'opera']);
+    }
+
+    public function testLoadRegistersManagerInitializerAndListener(): void
     {
         $container = new ContainerBuilder();
-
-        $config = [
-            'headless' => true,
-            'browser' => 'chromium',
-            'screenshot_dir' => '/tmp/screenshots',
-            'timeout' => 30000,
-            'base_url' => null,
-            'viewport' => ['width' => 1280, 'height' => 720],
-            'browser_options' => [],
-            'auto_screenshot_on_failure' => true,
-            'slow_mo' => ['delay' => 0],
-        ];
+        $config = $this->processConfig(['base_url' => 'http://localhost:8000']);
 
         $this->extension->load($container, $config);
 
-        $this->assertTrue($container->hasParameter('playwright.config'));
+        $manager = $container->getDefinition(PlaywrightManager::class);
+        $this->assertSame($config, $manager->getArgument(0));
+
+        $initializer = $container->getDefinition(PlaywrightAwareInitializer::class);
+        $this->assertTrue($initializer->hasTag(ContextExtension::INITIALIZER_TAG));
+
+        $listener = $container->getDefinition(ScenarioListener::class);
+        $this->assertTrue($listener->hasTag(EventDispatcherExtension::SUBSCRIBER_TAG));
+    }
+
+    public function testLoadResolvesBasePathInScreenshotDir(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('paths.base', '/project');
+        $config = $this->processConfig([]);
+
+        $this->extension->load($container, $config);
+
+        $argument = $container->getParameterBag()->resolveValue($container->getDefinition(PlaywrightManager::class)->getArgument(0));
+        $this->assertSame('/project/var/screenshots', $argument['screenshot_dir']);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     *
+     * @return array<string, mixed>
+     */
+    private function processConfig(array $config): array
+    {
+        $tree = new TreeBuilder('playwright');
+        $this->extension->configure($tree->getRootNode());
+
+        return (new Processor())->process($tree->buildTree(), [$config]);
     }
 }

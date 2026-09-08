@@ -15,12 +15,8 @@ declare(strict_types=1);
 namespace Playwright\Behat\Exception;
 
 /**
- * @author Simon André <smn.andre@gmail.com>
+ * Thrown by assertion steps when the page does not match the expectation.
  */
-final class BrowserNotStartedException extends PlaywrightException
+final class ExpectationFailedException extends PlaywrightException
 {
-    public function __construct()
-    {
-        parent::__construct('Browser is not started. Call startBrowser() first or use hooks.');
-    }
 }
