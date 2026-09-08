@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class PlaywrightExtension implements ExtensionInterface
 {
-    public const string PLAYWRIGHT_ID = 'playwright';
+    public const PLAYWRIGHT_ID = 'playwright';
 
     public function getConfigKey(): string
     {
