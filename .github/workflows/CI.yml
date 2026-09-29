@@ -35,7 +35,7 @@ jobs:
             behat: '^3.23'
             dependencies: 'lowest'
           - php: '8.4'
-            behat: '4.0.0-alpha1'
+            behat: '^4.0'
             dependencies: 'highest'
 
     steps:

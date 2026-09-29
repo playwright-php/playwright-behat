@@ -24,8 +24,8 @@ it keeps the Mink API and swaps the driver.
 
 ## Installation
 
-The extension requires PHP 8.2 or later, Behat 3.23 or later, and Playwright
-PHP 1.4 or later.
+The extension requires PHP 8.2 or later, Behat 3.23 or later (including 4.x),
+and Playwright PHP 1.4 or later.
 
 ```bash
 composer require --dev playwright-php/playwright-behat
@@ -153,7 +153,7 @@ vendor/bin/phpunit
 The suite includes a real `behat` run against `tests/Fixtures`, including a
 failing scenario that must leave a screenshot. Repository CI runs it on PHP
 8.2, 8.3 and 8.4 against the latest Behat 3.x, plus one job on the lowest
-supported dependencies and one on Behat 4.0.0-alpha1.
+supported dependencies and one on the latest Behat 4.x.
 
 ## License
 
