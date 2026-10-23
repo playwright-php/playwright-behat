@@ -25,7 +25,7 @@
     "homepage": "https://playwright-php.dev/behat",
     "require": {
         "php": "^8.2",
-        "behat/behat": "^3.23",
+        "behat/behat": "^3.23 || ^4.0",
         "playwright-php/playwright": "^1.4",
         "symfony/config": "^5.4 || ^6.4 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^5.4 || ^6.4 || ^7.0 || ^8.0",
